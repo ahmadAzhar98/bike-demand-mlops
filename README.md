@@ -12,16 +12,6 @@ Hourly bike-rental demand forecasting per Citi Bike station, built to learn prod
 
 Data: [Citi Bike trip data](https://citibikenyc.com/system-data) and [Open-Meteo](https://open-meteo.com/) historical weather.
 
-## Roadmap
-
-- [x] Phase 0 — environment and project layout
-- [ ] Phase 1 — data preparation and Feast feature definitions
-- [ ] Phase 2 — training with point-in-time features, tracked in MLflow
-- [ ] Phase 3 — model registry: versions and aliases (`@champion`, `@challenger`)
-- [ ] Phase 4 — FastAPI service: registry model + online features
-- [ ] Phase 5 — monitoring: drift and feature quality
-- [ ] Phase 6 — production-like stack (Postgres, MinIO, Redis, orchestration) with Docker Compose
-
 ## Setup
 
 ```bash
