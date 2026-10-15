@@ -87,3 +87,22 @@ Each version is tagged with its `feature_service`, so serving fetches exactly th
 from src.serving.predictor import Predictor
 Predictor("champion").predict(["6140.05"], pd.Timestamp("2025-06-01 04:00", tz="UTC"))
 ```
+
+## Prediction API
+
+```bash
+uvicorn src.serving.app:app --port 8000      # docs at http://127.0.0.1:8000/docs
+
+curl -X POST localhost:8000/predict -H 'Content-Type: application/json' \
+  -d '{"station_ids": ["6140.05", "5329.03"]}'
+```
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /predict` | next-hour rentals for stations; optional `prediction_time` (UTC) |
+| `GET /model` | serving version, alias, feature service, feature list |
+| `POST /reload` | re-resolve `@champion` after a promotion or rollback, no restart |
+| `GET /health` | liveness |
+
+Every prediction is appended to `logs/predictions.jsonl` with its features and model version, for monitoring.
+`MODEL_ALIAS` (default `champion`) and `DEFAULT_PREDICTION_TIME` configure the service.
