@@ -106,3 +106,29 @@ curl -X POST localhost:8000/predict -H 'Content-Type: application/json' \
 
 Every prediction is appended to `logs/predictions.jsonl` with its features and model version, for monitoring.
 `MODEL_ALIAS` (default `champion`) and `DEFAULT_PREDICTION_TIME` configure the service.
+
+## Monitoring
+
+A later month is prepared for the same stations, scored by `@champion` and compared with the training data:
+
+```bash
+python -m src.data.download --month 2025-01
+python -m src.data.prepare --month 2025-01 --stations-from data/processed/stations.parquet \
+  --out-dir data/monitoring/2025-01
+python -m src.monitoring.monitor --month 2025-01
+```
+
+| Check | Compared against | Retrain trigger |
+|---|---|---|
+| Feature drift (Evidently, per-feature distance tests) | training window | ≥ 50% of features drifted |
+| Performance (MAE normalized by mean demand) | held-out test week | ≥ 1.25× the reference |
+| Data quality: missing values | — | > 5% in any feature |
+| Data quality: values outside the training min/max | training window | > 10% in any feature |
+
+Each run writes an Evidently HTML report to `reports/` and logs metrics, the decision and the report to the
+`bike-demand-monitoring` MLflow experiment.
+
+| Month | Drift share | Normalized MAE ratio | Decision |
+|---|---|---|---|
+| 2025-06 | 29% | 0.90 | retrain: 35% of temperatures above the training range |
+| 2025-01 | 65% | 1.31 | retrain: drift, performance and out-of-range features |

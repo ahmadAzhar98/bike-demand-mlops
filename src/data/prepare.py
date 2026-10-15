@@ -53,7 +53,9 @@ def load_trips(yyyymm: str) -> pd.DataFrame:
     return trips
 
 
-def build_tables(year: int, month: int, top_n: int) -> dict[str, pd.DataFrame]:
+def build_tables(
+    year: int, month: int, top_n: int, station_ids: list[str] | None = None
+) -> dict[str, pd.DataFrame]:
     yyyymm = f"{year}{month:02d}"
     month_start = pd.Timestamp(year=year, month=month, day=1)
     month_end = month_start + pd.offsets.MonthBegin(1)
@@ -62,7 +64,10 @@ def build_tables(year: int, month: int, top_n: int) -> dict[str, pd.DataFrame]:
     # Files are grouped by trip end, so a few trips started in the previous month.
     trips = trips[(trips["started_at"] >= month_start) & (trips["started_at"] < month_end)]
 
-    top_ids = trips["start_station_id"].value_counts().head(top_n).index
+    if station_ids is None:
+        top_ids = trips["start_station_id"].value_counts().head(top_n).index
+    else:
+        top_ids = pd.Index(station_ids)
     trips = trips[trips["start_station_id"].isin(top_ids)]
     trips["hour"] = trips["started_at"].dt.floor("h")
 
@@ -127,12 +132,21 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--month", required=True, help="YYYY-MM, e.g. 2025-05")
     parser.add_argument("--top-n", type=int, default=20, help="number of busiest stations to keep")
+    parser.add_argument(
+        "--stations-from", type=Path,
+        help="stations.parquet whose station_ids to keep instead of the top N (e.g. the training set)",
+    )
+    parser.add_argument("--out-dir", type=Path, default=PROCESSED_DIR)
     args = parser.parse_args()
     year, month = map(int, args.month.split("-"))
+    station_ids = (
+        pd.read_parquet(args.stations_from)["station_id"].tolist() if args.stations_from else None
+    )
 
-    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
-    for name, df in build_tables(year, month, args.top_n).items():
-        path = PROCESSED_DIR / f"{name}.parquet"
+    out_dir = args.out_dir.resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for name, df in build_tables(year, month, args.top_n, station_ids).items():
+        path = out_dir / f"{name}.parquet"
         df.to_parquet(path, index=False)
         print(f"{name}: {len(df):,} rows -> {path.relative_to(ROOT)}")
 

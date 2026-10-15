@@ -15,3 +15,5 @@ feature_repo/data/
 mlflow-server.log
 logs/
 logs-api.out
+reports/
+data/monitoring/
