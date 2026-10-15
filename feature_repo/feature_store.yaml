@@ -1,0 +1,12 @@
+project: bike_demand
+provider: local
+# Registry: the catalog of entities, feature views and services (`feast apply` writes it).
+registry: data/registry.db
+# Offline store: historical features for training, read straight from Parquet.
+offline_store:
+  type: file
+# Online store: latest feature values per entity, for low-latency serving.
+online_store:
+  type: sqlite
+  path: data/online_store.db
+entity_key_serialization_version: 3

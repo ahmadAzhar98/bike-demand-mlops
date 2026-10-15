@@ -26,4 +26,22 @@ brew install libomp
 
 ```bash
 python -m src.data.download --month 2025-05
+python -m src.data.prepare --month 2025-05 --top-n 20
 ```
+
+## Feature store
+
+```bash
+cd feature_repo && feast apply && cd ..        # register entities, feature views, services
+python -m src.features.training_data            # point-in-time training frame from the offline store
+cd feature_repo && feast materialize-incremental 2025-06-01T04:00:00 && cd ..   # load latest values into the online store
+```
+
+| Feature view | Entity | Features |
+|---|---|---|
+| `station_demand_stats` | station | rentals lag 1h / 24h / 168h, 24h sum, 7-day mean |
+| `station_info` | station | latitude, longitude |
+| `weather_hourly` | city | temperature, humidity, precipitation, wind, weather code |
+| `time_features` (on-demand) | request | hour of day, day of week, weekend flag, cyclical hour |
+
+The `demand_model_v1` feature service bundles these for the model.

@@ -2,6 +2,7 @@
 
 Outputs (data/processed/):
     station_hourly_rentals.parquet  station_id, event_timestamp, rentals
+    station_demand_stats.parquet    station_id, event_timestamp, rentals_lag_1h, ...
     stations.parquet                station_id, station_name, latitude, longitude, event_timestamp
     weather_hourly.parquet          city, event_timestamp, temperature_c, humidity_pct, ...
 
@@ -100,9 +101,26 @@ def build_tables(year: int, month: int, top_n: int) -> dict[str, pd.DataFrame]:
 
     return {
         "station_hourly_rentals": rentals,
+        "station_demand_stats": demand_stats(rentals),
         "stations": stations,
         "weather_hourly": weather,
     }
+
+
+def demand_stats(rentals: pd.DataFrame) -> pd.DataFrame:
+    """Lagged demand features. The row stamped T only uses rentals from hours before T,
+    so it is safe to use when predicting rentals for hour T."""
+    df = rentals.sort_values(["station_id", "event_timestamp"]).copy()
+    past = df.groupby("station_id")["rentals"].shift(1)
+    by_station = past.groupby(df["station_id"])
+
+    df["rentals_lag_1h"] = past
+    df["rentals_lag_24h"] = df.groupby("station_id")["rentals"].shift(24)
+    df["rentals_lag_168h"] = df.groupby("station_id")["rentals"].shift(168)
+    df["rentals_sum_24h"] = by_station.transform(lambda s: s.rolling(24).sum())
+    df["rentals_mean_7d"] = by_station.transform(lambda s: s.rolling(168).mean())
+
+    return df.drop(columns="rentals")
 
 
 def main() -> None:
