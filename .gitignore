@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+
+# Generated data and artifacts
+data/raw/*
+data/processed/*
+!data/**/.gitkeep
+mlruns/
+mlartifacts/
+mlflow.db
+feature_repo/data/

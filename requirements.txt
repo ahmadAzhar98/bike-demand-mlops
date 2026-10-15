@@ -1,0 +1,22 @@
+# Model registry + experiment tracking
+mlflow
+
+# Feature store
+feast
+
+# Data + modeling
+pandas
+pyarrow
+scikit-learn
+lightgbm
+requests
+
+# Serving
+fastapi
+uvicorn
+
+# Monitoring
+evidently
+
+# Dev
+jupyter
