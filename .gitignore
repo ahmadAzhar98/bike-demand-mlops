@@ -12,3 +12,4 @@ mlruns/
 mlartifacts/
 mlflow.db
 feature_repo/data/
+mlflow-server.log

@@ -45,3 +45,18 @@ cd feature_repo && feast materialize-incremental 2025-06-01T04:00:00 && cd ..   
 | `time_features` (on-demand) | request | hour of day, day of week, weekend flag, cyclical hour |
 
 The `demand_model_v1` feature service bundles these for the model.
+
+## Training and experiment tracking
+
+```bash
+mlflow server --backend-store-uri sqlite:///mlflow.db --artifacts-destination ./mlartifacts \
+  --host 127.0.0.1 --port 5000            # UI at http://127.0.0.1:5000
+
+python -m src.training.train --model baseline                         # seasonal naive: same hour last week
+python -m src.training.train --model lightgbm --objective poisson
+python -m src.training.train --model lightgbm --objective regression --num-leaves 63
+```
+
+Data is split by time: train May 8–20, validation May 21–24 (early stopping), test May 25–31.
+Each run logs parameters, metrics (MAE, RMSE, R²), plots, the feature list, the training dataset and
+the model with its signature, tagged with the Feast feature service it was trained on.
