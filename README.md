@@ -60,3 +60,30 @@ python -m src.training.train --model lightgbm --objective regression --num-leave
 Data is split by time: train May 8–20, validation May 21–24 (early stopping), test May 25–31.
 Each run logs parameters, metrics (MAE, RMSE, R²), plots, the feature list, the training dataset and
 the model with its signature, tagged with the Feast feature service it was trained on.
+
+## Model registry
+
+Versions of `bike-demand-model` are managed with aliases instead of the deprecated stages:
+
+| Alias | Meaning | Old stage |
+|---|---|---|
+| `@champion` | serves production traffic | Production |
+| `@challenger` | candidate under evaluation | Staging |
+| `@previous` | last champion, for one-step rollback | — |
+| *(tag `status=archived`)* | retired, no alias | Archived |
+
+```bash
+python -m src.training.registry register --best      # best LightGBM run by valid_mae -> @challenger
+python -m src.training.registry promote              # challenger -> champion if it beats the champion on valid_mae
+python -m src.training.registry promote --version 3 --force
+python -m src.training.registry rollback             # swap @champion and @previous
+python -m src.training.registry archive --version 3
+python -m src.training.registry list
+```
+
+Each version is tagged with its `feature_service`, so serving fetches exactly the features the model was trained on:
+
+```python
+from src.serving.predictor import Predictor
+Predictor("champion").predict(["6140.05"], pd.Timestamp("2025-06-01 04:00", tz="UTC"))
+```

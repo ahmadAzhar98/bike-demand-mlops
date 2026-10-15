@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 from feast import Entity, FeatureService, FeatureView, Field, FileSource, RequestSource, ValueType
 from feast.on_demand_feature_view import on_demand_feature_view
-from feast.types import Float32, Float64, Int64, String, UnixTimestamp
+from feast.types import Float64, Int64, String, UnixTimestamp
 
 PROCESSED_DIR = Path(__file__).resolve().parents[1] / "data" / "processed"
 
@@ -93,8 +93,8 @@ prediction_request = RequestSource(
         Field(name="hour_of_day", dtype=Int64),
         Field(name="day_of_week", dtype=Int64),
         Field(name="is_weekend", dtype=Int64),
-        Field(name="hour_sin", dtype=Float32),
-        Field(name="hour_cos", dtype=Float32),
+        Field(name="hour_sin", dtype=Float64),
+        Field(name="hour_cos", dtype=Float64),
     ],
     mode="pandas",
 )
@@ -107,8 +107,8 @@ def time_features(inputs: pd.DataFrame) -> pd.DataFrame:
     out["day_of_week"] = local.dt.dayofweek.astype("int64")
     out["is_weekend"] = (local.dt.dayofweek >= 5).astype("int64")
     # Cyclical encoding so 23:00 and 00:00 are close together.
-    out["hour_sin"] = np.sin(2 * np.pi * out["hour_of_day"] / 24).astype("float32")
-    out["hour_cos"] = np.cos(2 * np.pi * out["hour_of_day"] / 24).astype("float32")
+    out["hour_sin"] = np.sin(2 * np.pi * out["hour_of_day"] / 24)
+    out["hour_cos"] = np.cos(2 * np.pi * out["hour_of_day"] / 24)
     return out
 
 
